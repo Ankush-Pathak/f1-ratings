@@ -92,7 +92,7 @@ export default function About() {
           cost: long careers slowly give back points won from drivers who later left.
         </p>
         <p>
-          That&apos;s also why it isn&apos;t the default: it has Lewis Hamilton, seven-time world champion, rated below
+          That&apos;s also why it isn&apos;t the default: it has Lewis Hamilton, eight-time world champion, rated below
           the average driver on today&apos;s grid. We don&apos;t print lies on the front page.
         </p>
       </Section>

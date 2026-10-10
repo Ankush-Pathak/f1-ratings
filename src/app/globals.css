@@ -106,7 +106,7 @@
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --input: oklch(1 0 0 / 22%);
   --ring: oklch(0.66 0.21 25 / 60%);
   --chart-1: oklch(0.68 0.2 25);
   --chart-2: oklch(0.7 0.13 250);
@@ -135,5 +135,15 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Native dropdown lists are drawn by the browser/OS; give them our colours so options stay
+     readable in dark mode instead of inheriting light text on a light system popup. */
+  html.dark {
+    color-scheme: dark;
+  }
+  select option,
+  select optgroup {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
   }
 }
