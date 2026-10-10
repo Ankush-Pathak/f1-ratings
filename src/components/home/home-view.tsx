@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RatingSystemSwitch } from "@/components/rating-system-switch";
+import { useScale } from "@/components/scale-provider";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RATING_LABEL } from "@/lib/format";
 import { RATING_KEYS, type RatingKey } from "@/lib/model";
 import { type DriverSummary, type RatingSystem, type SiteSummary, systemView } from "@/lib/site-data";
 import { Leaderboard } from "./leaderboard";
 import { Podium, type Section } from "./podium";
+import { PredictionTeaser, type Teaser } from "./prediction-teaser";
 
 /** All-time ranks by peak, Current Grid by current rating. Drivers never rated in a category are left out. */
 function rankDrivers(drivers: DriverSummary[], key: RatingKey, section: Section, system: RatingSystem) {
@@ -17,11 +18,11 @@ function rankDrivers(drivers: DriverSummary[], key: RatingKey, section: Section,
     .sort((a, b) => (section === "allTime" ? r(b).peak - r(a).peak : r(b).current - r(a).current));
 }
 
-export function HomeView({ summary }: { summary: SiteSummary }) {
+export function HomeView({ summary, teaser }: { summary: SiteSummary; teaser: Teaser | null }) {
   const [section, setSection] = useState<Section>("current");
   const [ratingKey, setRatingKey] = useState<RatingKey>("overall");
-  // One scale for both views, so switching Current Grid ↔ All-time keeps the same numbers.
-  const [system, setSystem] = useState<RatingSystem>("default");
+  // The site-wide scale from the top bar.
+  const { system } = useScale();
 
   const grid = useMemo(() => new Set(summary.currentGrid), [summary]);
   const pool = useMemo(() => {
@@ -42,7 +43,6 @@ export function HomeView({ summary }: { summary: SiteSummary }) {
           <p className="mt-1 text-muted-foreground">
             Elo ratings from teammate head-to-heads, {section === "allTime" ? "1982 to today" : `${season} season`}.
           </p>
-          <RatingSystemSwitch value={system} onChange={setSystem} className="mt-3" />
         </div>
         <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
           <TabsList>
@@ -51,6 +51,8 @@ export function HomeView({ summary }: { summary: SiteSummary }) {
           </TabsList>
         </Tabs>
       </div>
+
+      {teaser && <PredictionTeaser t={teaser} />}
 
       {/* The category drives both the podium and the leaderboard, so it sits above both. */}
       <div className="space-y-6">

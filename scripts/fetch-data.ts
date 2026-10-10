@@ -5,12 +5,14 @@
 //   npx tsx scripts/fetch-data.ts --jolpica  # Jolpica only
 //   npx tsx scripts/fetch-data.ts --openf1   # OpenF1 only
 //   npx tsx scripts/fetch-data.ts --full     # ignore the cache and re-fetch everything (weekly)
+//   npx tsx scripts/fetch-data.ts --headshots # only re-check which driver photos exist
 
 import fs from "node:fs";
 import path from "node:path";
 import { fetchSeason } from "../src/lib/sources/jolpica";
 import { fetchOpenF1Season } from "../src/lib/sources/openf1";
-import { LiveSessionLockout } from "../src/lib/sources/http";
+import { LiveSessionLockout, USER_AGENT } from "../src/lib/sources/http";
+import type { OpenF1Season } from "../src/lib/sources/openf1";
 
 export const FIRST_SEASON = 1982;
 const RAW = path.join(process.cwd(), "data", "raw");
@@ -57,13 +59,41 @@ async function fetchOpenF1(currentSeason: number, full: boolean) {
   }
 }
 
+/**
+ * F1's image CDN answers missing driver photos with a placeholder and HTTP 200, flagged only by an
+ * x-cld-error header, so the browser can't tell. Check each photo once and record the missing ones.
+ */
+async function checkHeadshots() {
+  const urls = new Set<string>();
+  for (const f of fs.existsSync(path.join(RAW, "openf1")) ? fs.readdirSync(path.join(RAW, "openf1")) : []) {
+    if (!/^\d{4}\.json$/.test(f)) continue;
+    const season = readJson<OpenF1Season>(path.join(RAW, "openf1", f));
+    for (const d of season?.latestRaceDrivers ?? []) if (d.headshot_url) urls.add(d.headshot_url);
+  }
+  const missing: string[] = [];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { method: "HEAD", headers: { "User-Agent": USER_AGENT } });
+      if (!res.ok || res.headers.has("x-cld-error")) missing.push(url);
+    } catch {
+      // Network hiccup: assume the photo is fine rather than hiding it.
+    }
+  }
+  writeJson(path.join(RAW, "openf1", "missing-headshots.json"), missing.sort());
+  console.log(`headshots: ${urls.size} checked, ${missing.length} missing`);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const only = args.find((a) => a === "--jolpica" || a === "--openf1");
+  if (args.includes("--headshots")) return checkHeadshots();
   const full = args.includes("--full");
   const currentSeason = new Date().getUTCFullYear();
   if (only !== "--openf1") await fetchJolpica(currentSeason, full);
-  if (only !== "--jolpica") await fetchOpenF1(currentSeason, full);
+  if (only !== "--jolpica") {
+    await fetchOpenF1(currentSeason, full);
+    await checkHeadshots();
+  }
 }
 
 main().catch((err) => {

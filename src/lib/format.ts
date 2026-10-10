@@ -49,6 +49,5 @@ export const updatedNote = (iso: string) =>
 
 export const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-/** Driver page link; carries the rating system so the page opens on the same numbers. */
-export const driverHref = (id: string, system: "default" | "recentred" = "default") =>
-  system === "recentred" ? `/driver/${id}/?system=recentred` : `/driver/${id}/`;
+/** Driver page link. The scale is a site-wide preference, so it isn't part of the URL. */
+export const driverHref = (id: string) => `/driver/${id}/`;

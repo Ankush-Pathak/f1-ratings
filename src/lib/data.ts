@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { RatingKey } from "./model";
-import type { LogEntry, RatingSystem, SiteSummary } from "./site-data";
+import type { LogEntry, PredictionSummary, RatingSystem, SiteSummary } from "./site-data";
 
 const GENERATED = path.join(process.cwd(), "data", "generated");
 
@@ -12,6 +12,10 @@ let summaryCache: SiteSummary | null = null;
 export function loadSummary(): SiteSummary {
   summaryCache ??= JSON.parse(fs.readFileSync(path.join(GENERATED, "summary.json"), "utf8")) as SiteSummary;
   return summaryCache;
+}
+
+export function loadPredictions(): PredictionSummary {
+  return JSON.parse(fs.readFileSync(path.join(GENERATED, "predictions.json"), "utf8")) as PredictionSummary;
 }
 
 /** One driver's log for one rating, read at build time; [] if they have none. */

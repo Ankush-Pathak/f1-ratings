@@ -1,6 +1,6 @@
 // Teammate head-to-head Elo engine. Pure: events in, ratings + logs out.
 
-import { eloDelta } from "./elo";
+import { eloDelta, expectedScore } from "./elo";
 import {
   RATING_KEYS,
   SESSION_CATEGORY,
@@ -82,6 +82,8 @@ export interface LogEntry {
   session: SessionKind;
   teammateId: string;
   result: MatchResult;
+  /** Elo's pre-match expected score for this driver (≈ win probability). */
+  expected: number;
   delta: number;
   /** Rating after this update. */
   rating: number;
@@ -245,7 +247,7 @@ export function computeRatings(events: RaceEvent[], config: EngineConfig = DEFAU
           }
           // All pairs use ratings from before this session.
           const before = new Map(members.map((m) => [m.driverId, drivers[m.driverId].ratings[key].current]));
-          const deltas: { id: string; mate: string; result: MatchResult; delta: number }[] = [];
+          const deltas: { id: string; mate: string; result: MatchResult; expected: number; delta: number }[] = [];
 
           for (let i = 0; i < members.length; i++) {
             for (let j = i + 1; j < members.length; j++) {
@@ -254,15 +256,18 @@ export function computeRatings(events: RaceEvent[], config: EngineConfig = DEFAU
               const score = compareEntries(session.kind, a, b);
               if (score == null) continue;
               const k = config.k * weight * split;
-              const delta = eloDelta(before.get(a.driverId)!, before.get(b.driverId)!, score, k);
+              const ra = before.get(a.driverId)!;
+              const rb = before.get(b.driverId)!;
+              const delta = eloDelta(ra, rb, score, k);
+              const expected = expectedScore(ra, rb);
               const resA: MatchResult = score === 1 ? "W" : score === 0 ? "L" : "D";
               const resB: MatchResult = score === 1 ? "L" : score === 0 ? "W" : "D";
-              deltas.push({ id: a.driverId, mate: b.driverId, result: resA, delta });
-              deltas.push({ id: b.driverId, mate: a.driverId, result: resB, delta: -delta });
+              deltas.push({ id: a.driverId, mate: b.driverId, result: resA, expected, delta });
+              deltas.push({ id: b.driverId, mate: a.driverId, result: resB, expected: 1 - expected, delta: -delta });
             }
           }
 
-          for (const { id, mate, result, delta } of deltas) {
+          for (const { id, mate, result, expected, delta } of deltas) {
             const d = drivers[id];
             const s = d.ratings[key];
             s.current += delta;
@@ -278,6 +283,7 @@ export function computeRatings(events: RaceEvent[], config: EngineConfig = DEFAU
               session: session.kind,
               teammateId: mate,
               result,
+              expected,
               delta,
               rating: s.current,
             });

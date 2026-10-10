@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { SiteFooter } from "@/components/site-footer";
+import { ScaleProvider } from "@/components/scale-provider";
 import { SiteHeader } from "@/components/site-header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -19,11 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <TooltipProvider>
-            <SiteHeader />
-            <main className="mx-auto w-full max-w-6xl flex-1 px-4">{children}</main>
-            <SiteFooter />
-          </TooltipProvider>
+          <ScaleProvider>
+            <TooltipProvider>
+              <SiteHeader />
+              <main className="mx-auto w-full max-w-6xl flex-1 px-4">{children}</main>
+              <SiteFooter />
+            </TooltipProvider>
+          </ScaleProvider>
         </ThemeProvider>
       </body>
     </html>

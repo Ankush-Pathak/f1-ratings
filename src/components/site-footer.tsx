@@ -12,7 +12,11 @@ export function SiteFooter() {
           <a className="underline underline-offset-4 hover:text-foreground" href="https://www.youtube.com/@MrVsGarage">
             Mr V&apos;s Garage
           </a>
-          . Data from Jolpica-F1 and OpenF1. Unofficial fan site, not affiliated with Formula 1.
+          . Data from Jolpica-F1 and OpenF1. Unofficial fan site, not affiliated with Formula 1.{" "}
+          <a className="underline underline-offset-4 hover:text-foreground" href="https://github.com/Ankush-Pathak/f1-ratings">
+            Source on GitHub
+          </a>
+          .
         </p>
         <p>
           Updated {updated}

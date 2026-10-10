@@ -7,7 +7,9 @@ import type { DriverSummary } from "@/lib/site-data";
 import { cn } from "@/lib/utils";
 
 /** Photo where we have one; initials on a team-coloured ring if there's none or it fails to load. */
-export function DriverAvatar({ driver, size = 40, className }: { driver: DriverSummary; size?: number; className?: string }) {
+export type AvatarDriver = Pick<DriverSummary, "givenName" | "familyName" | "headshot" | "teamColour">;
+
+export function DriverAvatar({ driver, size = 40, className }: { driver: AvatarDriver; size?: number; className?: string }) {
   const [failed, setFailed] = useState(false);
   const style = { width: size, height: size, borderColor: teamColour(driver) };
   if (driver.headshot && !failed) {

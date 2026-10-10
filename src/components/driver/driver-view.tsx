@@ -1,52 +1,28 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { DriverAvatar } from "@/components/driver-avatar";
-import { RatingSystemSwitch } from "@/components/rating-system-switch";
+import { useScale } from "@/components/scale-provider";
 import { Trend } from "@/components/trend";
 import { careerSpan, eventLabel, fullName, RATING_LABEL, rating, teamColour } from "@/lib/format";
 import { RATING_KEYS } from "@/lib/model";
-import { type DriverSummary, type RatingSystem, systemView } from "@/lib/site-data";
+import { type DriverRanks, type DriverSummary, systemView } from "@/lib/site-data";
 import { DriverHistory } from "./driver-history";
 
-// The chosen system lives in ?system= so links and reloads keep it. The page is static, so the
-// URL is read in the browser; the server render (and first paint) uses the default.
-const URL_EVENT = "rating-system-change";
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("popstate", onChange);
-  window.addEventListener(URL_EVENT, onChange);
-  return () => {
-    window.removeEventListener("popstate", onChange);
-    window.removeEventListener(URL_EVENT, onChange);
-  };
-}
-
-function systemFromUrl(): RatingSystem {
-  return new URLSearchParams(window.location.search).get("system") === "recentred" ? "recentred" : "default";
-}
-
-function setSystemInUrl(next: RatingSystem) {
-  const url = new URL(window.location.href);
-  if (next === "default") url.searchParams.delete("system");
-  else url.searchParams.set("system", next);
-  window.history.replaceState(null, "", url);
-  window.dispatchEvent(new Event(URL_EVENT));
-}
-
-/** Driver header + history, both following the Default / Re-centred switch (kept in ?system=). */
+/** Driver header + history, both following the site-wide scale. */
 export function DriverView({
   driver: d,
   onGrid,
   teammates,
+  ranks,
   updatedAt,
 }: {
   driver: DriverSummary;
   onGrid: boolean;
   teammates: Record<string, string>;
+  ranks: DriverRanks;
   updatedAt: string;
 }) {
-  const system = useSyncExternalStore(subscribe, systemFromUrl, () => "default" as RatingSystem);
+  const { system } = useScale();
 
   const v = systemView(d, system);
   const available = RATING_KEYS.filter((k) => v.ratings[k].matches > 0);
@@ -75,6 +51,16 @@ export function DriverView({
                   {onGrid && <Trend value={v.ratings[k].trend} className="text-xs" />}
                 </dd>
                 <dd className="text-xs text-muted-foreground tabular-nums">peak {rating(v.ratings[k].peak)}</dd>
+                <dd className="mt-0.5 text-xs tabular-nums">
+                  {ranks[system][k].grid != null && (
+                    <span className="font-medium text-foreground" title="Rank on the current grid">
+                      #{ranks[system][k].grid} grid ·{" "}
+                    </span>
+                  )}
+                  <span className="text-muted-foreground" title="All-time rank, by peak rating">
+                    #{ranks[system][k].allTime} all-time
+                  </span>
+                </dd>
               </div>
             ))}
           </dl>
@@ -92,7 +78,6 @@ export function DriverView({
         teammates={teammates}
         available={available}
         updatedAt={updatedAt}
-        scaleControl={<RatingSystemSwitch value={system} onChange={setSystemInUrl} />}
       />
     </>
   );

@@ -73,7 +73,7 @@ export function Leaderboard({
                 <TableRow key={d.id} className="group">
                   <TableCell className="text-right text-muted-foreground tabular-nums">{rank}</TableCell>
                   <TableCell>
-                    <Link href={driverHref(d.id, system)} className="flex items-center gap-3">
+                    <Link href={driverHref(d.id)} className="flex items-center gap-3">
                       <span className="h-8 w-1 rounded-full" style={{ background: teamColour(d) }} aria-hidden />
                       <DriverAvatar driver={d} size={32} className="hidden sm:inline-flex" />
                       <span className="min-w-0">

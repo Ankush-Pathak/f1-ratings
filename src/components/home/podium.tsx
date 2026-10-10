@@ -43,7 +43,7 @@ function PodiumCard({
   const winner = place === 1;
   return (
     <Link
-      href={driverHref(driver.id, system)}
+      href={driverHref(driver.id)}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-xl border bg-card p-5 transition-shadow hover:shadow-md",
         winner ? "md:order-2 md:-mt-4 md:pb-8" : place === 2 ? "md:order-1" : "md:order-3",

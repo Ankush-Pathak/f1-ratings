@@ -4,8 +4,18 @@ import type { DriverInfo, Entry, RaceEvent, Session, SessionKind, TeamInfo } fro
 import type { JDriver, JolpicaSeason, JQualifying, JRace, JResult, JSessionTime } from "./sources/jolpica";
 import type { OpenF1Season, OSprintQualifying } from "./sources/openf1";
 
+export interface UpcomingEvent {
+  season: number;
+  round: number;
+  name: string;
+  date: string;
+  sprint: boolean;
+}
+
 export interface NormalizedData {
   events: RaceEvent[];
+  /** The next scheduled weekend with no results yet, if any. */
+  upcoming: UpcomingEvent | null;
   drivers: Record<string, DriverInfo>;
   teams: Record<string, TeamInfo>;
   headshots: Record<string, string>;
@@ -88,12 +98,17 @@ function findSprintRound(sq: OSprintQualifying, schedule: JRace[]): JRace | unde
   return schedule.find((r) => r.Sprint && Date.parse(r.date) - t >= 0 && Date.parse(r.date) - t <= 3 * 86_400_000);
 }
 
-export function normalize(jolpica: JolpicaSeason[], openf1: OpenF1Season[]): NormalizedData {
+export function normalize(
+  jolpica: JolpicaSeason[],
+  openf1: OpenF1Season[],
+  missingHeadshots: Set<string> = new Set(),
+): NormalizedData {
   const drivers: Record<string, DriverInfo> = {};
   const teams: Record<string, TeamInfo> = {};
   const headshots: Record<string, string> = {};
   const teamColours: Record<string, string> = {};
   const events: RaceEvent[] = [];
+  let upcoming: UpcomingEvent | null = null;
 
   const noteDriver = (d: JDriver) => {
     drivers[d.driverId] = {
@@ -154,7 +169,16 @@ export function normalize(jolpica: JolpicaSeason[], openf1: OpenF1Season[]): Nor
             TIE_ORDER.indexOf(a.session.kind) - TIE_ORDER.indexOf(b.session.kind),
         )
         .map((t) => t.session);
-      if (sessions.length === 0) continue;
+      if (sessions.length === 0) {
+        // The first round without results after the last rated weekend is the next race.
+        const lastDate = events.at(-1)?.date ?? "";
+        if (!upcoming && sched.date > lastDate) {
+          upcoming = { season: season.season, round: Number(sched.round), name: sched.raceName, date: sched.date, sprint: !!sched.Sprint };
+        } else if (upcoming && sched.date < upcoming.date && sched.date > lastDate) {
+          upcoming = { season: season.season, round: Number(sched.round), name: sched.raceName, date: sched.date, sprint: !!sched.Sprint };
+        }
+        continue;
+      }
 
       const sprintWeekend = !!sched.Sprint;
       events.push({
@@ -179,10 +203,12 @@ export function normalize(jolpica: JolpicaSeason[], openf1: OpenF1Season[]): Nor
     for (const d of of1?.latestRaceDrivers ?? []) {
       const j = byNumber.get(d.driver_number);
       if (!j) continue;
-      if (d.headshot_url) headshots[j.Driver.driverId] = d.headshot_url;
+      if (d.headshot_url && !missingHeadshots.has(d.headshot_url)) headshots[j.Driver.driverId] = d.headshot_url;
       if (d.team_colour && j.Constructor) teamColours[j.Constructor.constructorId] = `#${d.team_colour}`;
     }
   }
 
-  return { events, drivers, teams, headshots, teamColours };
+  // A round only counts as upcoming if no later round has results.
+  if (upcoming && events.some((e) => e.date > upcoming!.date)) upcoming = null;
+  return { events, upcoming, drivers, teams, headshots, teamColours };
 }

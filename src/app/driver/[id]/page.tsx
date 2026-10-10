@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { DriverView } from "@/components/driver/driver-view";
 import { loadDriverLog, loadSummary } from "@/lib/data";
 import { fullName } from "@/lib/format";
+import { driverRanks } from "@/lib/site-data";
 import { RATING_KEYS } from "@/lib/model";
 
 export const dynamicParams = false;
@@ -39,7 +40,13 @@ export default async function DriverPage({ params }: { params: Promise<{ id: str
         <ArrowLeft className="size-4" /> Leaderboards
       </Link>
 
-      <DriverView driver={d} onGrid={onGrid} teammates={teammates} updatedAt={summary.generatedAt} />
+      <DriverView
+        driver={d}
+        onGrid={onGrid}
+        teammates={teammates}
+        ranks={driverRanks(summary, id)}
+        updatedAt={summary.generatedAt}
+      />
     </div>
   );
 }

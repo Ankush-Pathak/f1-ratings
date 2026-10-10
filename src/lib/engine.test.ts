@@ -65,6 +65,8 @@ describe("computeRatings", () => {
     expect(r.drivers.a.ratings.overall.current).toBe(1016);
     expect(r.drivers.b.ratings.race.current).toBe(984);
     expect(r.drivers.a.logs.race[0]).toMatchObject({ teammateId: "b", result: "W", delta: 16 });
+    expect(r.drivers.a.logs.race[0].expected).toBe(0.5);
+    expect(r.drivers.b.logs.race[0].expected).toBe(0.5);
   });
 
   it("ignores drivers without a teammate", () => {

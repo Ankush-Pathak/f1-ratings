@@ -78,15 +78,12 @@ export function DriverHistory({
   teammates,
   available,
   updatedAt,
-  scaleControl,
 }: {
   driverId: string;
   system: RatingSystem;
   teammates: Record<string, string>;
   available: RatingKey[];
   updatedAt: string;
-  /** Rendered at the right end of the rating tabs row. */
-  scaleControl?: React.ReactNode;
 }) {
   const [key, setKey] = useState<RatingKey>(available[0] ?? "overall");
   // Logs per "<system>/<rating>", fetched the first time each is shown.
@@ -110,18 +107,15 @@ export function DriverHistory({
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={key} onValueChange={(v) => setKey(v as RatingKey)} className="max-w-full overflow-x-auto overflow-y-hidden">
-          <TabsList>
-            {available.map((k) => (
-              <TabsTrigger key={k} value={k}>
-                {RATING_LABEL[k]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        {scaleControl}
-      </div>
+      <Tabs value={key} onValueChange={(v) => setKey(v as RatingKey)} className="max-w-full overflow-x-auto overflow-y-hidden">
+        <TabsList>
+          {available.map((k) => (
+            <TabsTrigger key={k} value={k}>
+              {RATING_LABEL[k]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {failed[cacheKey] ? (
         <p className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">

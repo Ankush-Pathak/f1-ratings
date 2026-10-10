@@ -86,8 +86,8 @@ export default function About() {
           add up over a career. It rewards long, dominant careers, and modern drivers, who play more matches a season.
         </p>
         <p>
-          The <strong className="text-foreground">re-centred</strong> rating (the Scale switch on the leaderboards and
-          driver pages) shifts each weekend&apos;s grid so its average is exactly 1000, and starts new drivers at that average.
+          The <strong className="text-foreground">re-centred</strong> rating (the Scale switch in the top bar, which
+          applies across the site) shifts each weekend&apos;s grid so its average is exactly 1000, and starts new drivers at that average.
           A rating then means &ldquo;how far above the field of the day&rdquo;, which compares eras more fairly. The
           cost: long careers slowly give back points won from drivers who later left.
         </p>
