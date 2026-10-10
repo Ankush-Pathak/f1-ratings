@@ -50,12 +50,9 @@ function PodiumCard({
       )}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: teamColour(driver) }} aria-hidden />
-      <div className="flex items-start justify-between">
-        <span className={cn("text-sm font-semibold tabular-nums", winner ? "text-primary" : "text-muted-foreground")}>
-          #{place}
-        </span>
-        {section === "current" && <Trend value={o.trend} className="text-sm" />}
-      </div>
+      <span className={cn("text-sm font-semibold tabular-nums", winner ? "text-primary" : "text-muted-foreground")}>
+        #{place}
+      </span>
       <div className="mt-3 flex items-center gap-3">
         <DriverAvatar driver={driver} size={winner ? 64 : 52} />
         <div className="min-w-0">
@@ -68,8 +65,17 @@ function PodiumCard({
       {/* The number the section ranks by is big and highlighted; the other sits beside it. */}
       <div className="mt-4 flex items-end justify-between gap-4">
         <div>
-          <p className={cn("font-semibold tracking-tight text-highlight tabular-nums", winner ? "text-6xl" : "text-5xl")}>
-            {rating(section === "allTime" ? o.peak : o.current)}
+          <p className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "font-semibold tracking-tight text-highlight tabular-nums",
+                winner ? "text-6xl" : "text-5xl",
+              )}
+            >
+              {rating(section === "allTime" ? o.peak : o.current)}
+            </span>
+            {/* The trend describes the current rating, so it sits right beside it. */}
+            {section === "current" && <Trend value={o.trend} className="text-sm" />}
           </p>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
             {section === "allTime" ? "Peak rating" : "Rating now"}
@@ -78,7 +84,9 @@ function PodiumCard({
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold tabular-nums">{rating(section === "allTime" ? o.current : o.peak)}</p>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">{section === "allTime" ? "Now" : "Peak"}</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {section === "allTime" ? "Now" : "Peak"}
+          </p>
         </div>
       </div>
       <dl className="mt-4 space-y-1.5 border-t pt-4">
