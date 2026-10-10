@@ -1,0 +1,83 @@
+# Once a day: fetch new results, commit the raw cache, recompute ratings, deploy to GitHub Pages.
+# Every Monday (no F1 sessions): re-fetch all history to pick up corrections to past seasons.
+name: Daily update
+
+on:
+  schedule:
+    # 09:00 UTC sits between the Asian/Las Vegas sessions and the European ones, when OpenF1
+    # is least likely to be locked for a live session. A locked run keeps cached data and retries tomorrow.
+    - cron: "0 9 * * *"
+    # Weekly full refresh, ~70 min within Jolpica's 500 requests/hour.
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Re-fetch all history"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Fetch new results
+        if: github.event_name != 'push'
+        run: npx tsx scripts/fetch-data.ts ${{ (github.event.schedule == '0 3 * * 1' || inputs.full) && '--full' || '' }}
+
+      - name: Commit raw data cache
+        if: github.event_name != 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw
+          if ! git diff --cached --quiet; then
+            git commit -m "data: results update"
+            git push
+          fi
+
+      - name: Compute ratings
+        run: npx tsx scripts/build-ratings.ts
+
+      - uses: actions/configure-pages@v6
+        id: pages
+
+      - name: Build site
+        run: npx next build
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v5
+        id: deployment
